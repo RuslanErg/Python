@@ -157,10 +157,53 @@
 
 # Вариант 2 - использование множественного присваивания
 
-var_1 = 50
-var_2 = 5
+# var_1 = 50
+# var_2 = 5
+#
+# var_1, var_2 = var_2, var_1
+#
+# print("var_1 =", var_1)
+# print("var_2 =", var_2)
 
-var_1, var_2 = var_2, var_1
+# from selenium import webdriver
+#
+# # Пример для Google Chrome
+# driver = webdriver.Chrome()
+# driver.get("http://www.google.com")
+# print(driver.title)
+# driver.quit()
 
-print("var_1 =", var_1)
-print("var_2 =", var_2)
+# from selenium import webdriver
+#
+# driver = webdriver.Chrome()
+# driver.get("https://www.example.com")
+# print(f'Заголовок страницы: {driver.title}')
+#
+# driver.quit()
+
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+#
+# driver = webdriver.Chrome()
+# driver.get("https://www.python.org/")
+#
+# driver.find_element(By.LINK_TEXT, "Donate").click()
+#
+# driver.quit()
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import time
+
+driver = webdriver.Chrome()
+driver.get("https://www.google.com")
+
+search_box = driver.find_element(By.NAME, "q")
+search_box.send_keys("Selenium")
+time.sleep(5)
+
+search_box.send_keys(Keys.RETURN)
+
+time.sleep(5)
+driver.quit()
