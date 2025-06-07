@@ -3,7 +3,6 @@ from selenium.webdriver.common.by import By
 import time
 
 driver = webdriver.Chrome()
-driver.get("https://www.google.com")
 driver.get("http://uitestingplayground.com/classattr")
 time.sleep(2)
 
