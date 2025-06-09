@@ -22,7 +22,6 @@
 # print_letter("Е")
 # print_letter("Н")
 # print_letter("Т")
-from time import sleep
 
 # Выведите на экран второй и второй с конца элементы через запятую:
 # employee_list = ["Jonh Snow", "Piter Pen", "Drakula", "IvanIV", "Moana", "Juilet"]
@@ -158,52 +157,10 @@ from time import sleep
 
 # Вариант 2 - использование множественного присваивания
 
-# var_1 = 50
-# var_2 = 5
-#
-# var_1, var_2 = var_2, var_1
+var_1 = 50
+var_2 = 5
 
-# print("var_1 =", var_1)
-# print("var_2 =", var_2)
+var_1, var_2 = var_2, var_1
 
-# from selenium import webdriver
-#
-# # Пример для Google Chrome
-# driver = webdriver.Chrome()
-# driver.get("http://www.google.com")
-# print(driver.title)
-# driver.quit()
-
-# from selenium import webdriver
-#
-# driver = webdriver.Chrome()
-# driver.get("https://www.example.com")
-# print(f'Заголовок страницы: {driver.title}')
-#
-# driver.quit()
-
-# from selenium import webdriver
-# from selenium.webdriver.common.by import By
-#
-# driver = webdriver.Chrome()
-# driver.get("https://www.python.org/")
-#
-# driver.find_element(By.LINK_TEXT, "Donate").click()
-#
-# driver.quit()
-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-
-driver = webdriver.Chrome()
-driver.get("https://www.google.com")
-
-    # Найти строку поиска и ввести "Selenium"
-search_box = driver.find_element(By.NAME, "q")
-search_box.send_keys("Selenium")
-sleep(5)
-    # Нажать Enter для выполнения поиска
-search_box.send_keys(Keys.RETURN)
-sleep(5)
-driver.quit()
+print("var_1 =", var_1)
+print("var_2 =", var_2)
