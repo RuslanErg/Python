@@ -45,8 +45,3 @@ def test_purchase_flow(driver):
 
     # Проверка, что итоговая сумма равна $58.29
     assert total_text == 'Total: $58.29'
-
-
-def teardown(self):
-    # Закрываем браузер
-    self.driver.quit()
