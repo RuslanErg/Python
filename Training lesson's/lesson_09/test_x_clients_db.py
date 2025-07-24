@@ -1,128 +1,151 @@
+import allure
 from CompanyApi import CompanyApi
 from CompanyTable import CompanyTable
-from datetime import datetime
 
-api = CompanyApi("http://5.101.50.27:8000")
-db = CompanyTable("postgresql://qa:skyqa@5.101.50.27:5432/x_clients")
+@allure.epic("компании")
+@allure.severity("blocker")
+class CompanyTest:
+    
 
+    api = CompanyApi("http://5.101.50.27:8000")
+    db = CompanyTable("postgresql://qa:skyqa@5.101.50.27:5432/x_clients")
 
-def test_get_companies():
-    #Шаг1: получить список компаний через API:
-    api_result = api.get_company_list()
+    @allure.id("SKYPRO-1")
+    @allure.story("Получение компаний")
+    @allure.feature("READ")
+    @allure.epic("компании")
+    def test_get_companies():
+        with allure.step("Получить список компаний через API"):
+            api_result = api.get_company_list()
+        with allure.step("Получить список компаний из БД"):
+            db_result = db.get_companies()
+        with allure.step("Сравнить размеры 2х списков"):
+            assert len(api_result) == len(db_result)
 
-    #Шаг2: получить список компаний из БД:
-    db_result = db.get_companies()
+    @allure.id("SKYPRO-2")
+    @allure.story("Получение списка компаний")
+    @allure.feature("READ")
+    @allure.title("Получение списка активных организаций")
+    @allure.description("Запрос организация с параметром active = true")
+    def test_get_active_companies(self):
+        filtered_list = self.api.get_company_list(params_to_add={"active": "true"})
+        db_list = self.db.get_active_companies()
 
-    #Шаг2: проверить, что списки равны
-    assert len(api_result) == len(db_result)
+        assert len(filtered_list) == len(db_list)
 
+    @allure.id("SKYPRO-3")
+    @allure.story("Создание компаний")
+    @allure.feature("CREATE")
+    @allure.title("Создание организации")
+    def test_add_new(self):
+        with allure.step("Получить количество организаций ДО"):
+            body = self.api.get_company_list()
+            len_before = len(body)
 
+            with allure.step("Создать организацию"):
+                with allure.step("Сгенерировать название"):
+                    name = "Autotest"
+                    descr = "Descr"
 
-def test_get_active_companies():
-    filtered_list = api.get_company_list(params_to_add={"active": "true"})
-    db_list = db.get_active_companies()
+                with allure.step("Вызвать API-метод для создания"):
+                    result = self.api.create_company(name, descr)
+                    new_id = result["id"]
 
-    assert len(filtered_list) == len(db_list)
+        with allure.step("Проверить поля новой организации. Корректно заполнены"):
+            for company in body:
+                if company["id"] == new_id:
+                    assert company["name"] == name
+                    assert company["description"] == descr
+                    assert company["id"] == new_id
 
+        with allure.step("Получить количество организаций после"):
+            body = self.api.get_company_list()
+            len_after = len(body)
 
-def test_add_new():
-    body = api.get_company_list()
-    len_before = len(body)
+        with allure.step("Проверить, что список ДО меньше списка ПОСЛЕ на 1"):
+            assert len_after - len_before == 1
 
-    name = "Autotest"
-    descr = "DescrRRR"
-    result = api.create_company(name, descr)
+        with allure.step("Удалить из БД новую организацию"):
+            self.db.delete(new_id)
 
-    assert "id" in result
-    new_id = result["id"]
+    @allure.id("SKYPRO-4")
+    @allure.story("Получение компании по id")
+    @allure.feature("UPDATE")
+    @allure.title("Получение организации по id")
+    def test_get_one_company(self):
+        #Подготовка
+        name = "Skypro"
+        self.db.create(name)
+        max_id = self.db.get_max_id()
 
-    body = api.get_company_list()
-    len_after = len(body)
+        #Получение компании
+        new_company = self.api.get_company(max_id)
 
-    db.delete(new_id)
+        #Удаление
+        self.db.delete(max_id)
 
-    assert len_after - len_before == 1
-    for company in body:
-        if "id" in company and company["id"] == new_id:
-            assert company["name"] == name
-            assert company["description"] == descr
-            assert company["id"] == new_id
+        assert new_company["id"] == max_id
+        assert new_company["name"] == name
+        assert new_company["isActive"] is True
 
+    def test_delete(self):
+        #Добавили компанию через базу:
+        name = "Skypro"
+        self.db.create(name)
+        max_id = self.db.get_max_id()
 
-def test_get_one_company():
-    #Подготовка
-    name = "Skypro"
-    db.create(name)
-    max_id = db.get_max_id()
+        #Удалили компанию:
+        deleted = self.api.delete(max_id)
 
-    #Получение компании
-    new_company = api.get_company(max_id)
+        assert deleted["company_id"] == max_id
+        assert deleted["detail"] == "Компания успешно удалена"
 
-    #Удаление
-    db.delete(max_id)
+        # Проверили по ID, что компании нет в базе:
+        rows = self.db.get_company_by_id(max_id)
+        assert len(rows) == 0
 
-    assert new_company["id"] == max_id
-    assert new_company["name"] == name
-    assert new_company["isActive"] is True
+    def test_deactivate(self):
+        # Создаем компанию
+        name = "Company to be deactivated"
+        result = self.api.create_company(name)
+        new_id = result["id"]
+        # Деактивируем компанию
+        body = self.api.set_active_state(new_id, False)
 
-def test_delete():
-    #Добавили компанию через базу:
-    name = "Skypro"
-    db.create(name)
-    max_id = db.get_max_id()
+        # Проверяем, что у компании статус «неактивная»
+        assert body["is_active"] is False
 
-    #Удалили компанию:
-    deleted = api.delete(max_id)
+    def test_deactivate_and_activate_back(self):
+        #Создаем компанию:
+        name = "Company to be deactivated"
+        result = self.api.create_company(name)
+        new_id = result["id"]
 
-    assert deleted["company_id"] == max_id
-    assert deleted["detail"] == "Компания успешно удалена"
+        # Деактивируем компанию с помощью параметра False
+        body_d = self.api.set_active_state(new_id, False)
 
-    # Проверили по ID, что компании нет в базе:
-    rows = db.get_company_by_id(max_id)
-    assert len(rows) == 0
+        # Проверяем, что компания не активная
+        assert body_d["is_active"] is False
 
-def test_deactivate():
-    # Создаем компанию
-    name = "Company to be deactivated"
-    result = api.create_company(name)
-    new_id = result["id"]
-    # Деактивируем компанию
-    body = api.set_active_state(new_id, False)
+        # Активируем компанию с помощью параметра True
+        body_a = self.api.set_active_state(new_id, True)
 
-    # Проверяем, что у компании статус «неактивная»
-    assert body["is_active"] is False
+        # Проверяем, что компания активная
+        assert body_a["is_active"] is True
 
-def test_deactivate_and_activate_back():
-    #Создаем компанию:
-    name = "Company to be deactivated"
-    result = api.create_company(name)
-    new_id = result["id"]
+    def test_edit(self):
+        # Добавляем в базу компанию с названием Skypro:
+        name = "Skypro"
+        self.db.create(name)
+        max_id = self.db.get_max_id()
 
-    # Деактивируем компанию с помощью параметра False
-    body_d = api.set_active_state(new_id, False)
+        # Меняем описание компании в поле description:
+        new_name = "Updated"
+        new_descr = "_upd_"
+        edited = self.api.edit_company(max_id, new_name, new_descr)
 
-    # Проверяем, что компания не активная
-    assert body_d["is_active"] is False
+        # Удаляем компанию:
+        self.db.delete(max_id)
 
-    # Активируем компанию с помощью параметра True
-    body_a = api.set_active_state(new_id, True)
-
-    # Проверяем, что компания активная
-    assert body_a["is_active"] is True
-
-def test_edit():
-    # Добавляем в базу компанию с названием Skypro:
-    name = "Skypro"
-    db.create(name)
-    max_id = db.get_max_id()
-
-    # Меняем описание компании в поле description:
-    new_name = "Updated"
-    new_descr = "_upd_"
-    edited = api.edit_company(max_id, new_name, new_descr)
-
-    # Удаляем компанию:
-    db.delete(max_id)
-
-    assert edited["name"] == new_name
-    assert edited["description"] == new_descr
+        assert edited["name"] == new_name
+        assert edited["description"] == new_descr

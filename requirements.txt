@@ -1,16 +1,18 @@
 pytest~=8.3.5
 
 # Основные зависимости
-requests  # Библиотека для HTTP-запросов
-SQLAlchemy  # ORM для работы с базами данных
+requests~=2.32.3
+SQLAlchemy~=2.0.41
 psycopg2-binary  # Драйвер PostgreSQL для Python
 
 # Инструменты для тестирования
 pytest  # Фреймворк для тестирования
-selenium  # Инструмент для автоматизации браузера
-webdriver-manager  # Утилита для управления веб-драйверами
+selenium~=4.33.0
+webdriver-manager~=4.0.2
 allure-pytest  # Плагин для интеграции Allure с pytest
 faker  # Библиотека для генерации фейковых данных
 
 # Линтеры и инструменты для анализа кода
 flake8  # Линтер для проверки стиля кода
+Student~=0.0.1
+allure-python-commons~=2.14.2
