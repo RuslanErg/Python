@@ -1,17 +1,17 @@
 import requests
-
+import allure
 
 class CompanyApi:
     # Инициализация
     def __init__(self, url) -> None:
         self.url = url
 
-    # Получить список компаний
+    @allure.step("api. Получить список компаний через API")
     def get_company_list(self, params_to_add=None):
         resp = requests.get(self.url + '/company/list', params=params_to_add)
         return resp.json()
 
-    # Получить токен авторизации
+    @allure.step("api. Получить токен авторизации для пользователя {user}:{password}")
     def get_token(self, user='harrypotter', password='expelliarmus'):
         creds = {
             "username": user,
@@ -20,7 +20,7 @@ class CompanyApi:
         resp = requests.post(self.url + '/auth/login', json=creds)
         return resp.json()["user_token"]
 
-    # Добавить компанию:
+    @allure.step("api. Создать компанию {name} ({description})")
     def create_company(self, name, description=""):
         company = {
             "name": name,
@@ -30,10 +30,12 @@ class CompanyApi:
                              json=company)
         return resp.json()
 
+    @allure.step("api. Получить компанию по {id}")
     def get_company(self, id):
         resp = requests.get(self.url + '/company/' + str(id))
         return resp.json()
 
+    @allure.step("api. Редактировать компанию {new_id}. {new_name} ({new_descr})")
     def edit_company(self, new_id, new_name, new_descr):
         # Получаем токен
         client_token = self.get_token()
@@ -54,6 +56,7 @@ class CompanyApi:
         # Результат вернется в JSON, мы его прокинем в тест
         return resp.json()
 
+    @allure.step("api. Удалить компанию {id}")
     def delete_company(self, id):
         client_token = self.get_token()
 
@@ -67,6 +70,7 @@ class CompanyApi:
         # Возвращаем JSON-ответ
         return resp.json()
 
+    @allure.step("api. (Де)активировать компанию {id} -> {isActive}")
     def set_active_state(self, id, is_active):
         client_token = self.get_token()
 
