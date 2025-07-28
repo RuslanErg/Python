@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, text
-from datetime import datetime
+import allure
 
 
 class CompanyTable:
@@ -19,59 +19,36 @@ class CompanyTable:
     def __init__(self, connection_string):
         self.__db = create_engine(connection_string)
 
+    @allure.step("БД. Запросить список организаций")
     def get_companies(self):
-        conn = self.__db.connect()
-        result = conn.execute(self.__scripts["select"])
-        rows = result.mappings().all()
-        conn.close()
-        return rows
+        query = self.__db.execute(self.__scripts["select"])
+        allure.attach(str(query.context.cursor.query), 'SQL', allure.attachment_type.TEXT)
+        return query.fetchall()
 
+
+    @allure.step("БД. Запросить список активных организаций")
     def get_active_companies(self):
-        conn = self.__db.connect()
-        result = conn.execute(self.__scripts["select_active"])
-        rows = result.mappings().all()
-        conn.close()
-        return rows
+        query = self.__db.execute(self.__scripts["select only active"])
+        allure.attach(str(query.context.cursor.query), 'SQL', allure.attachment_type.TEXT)
+        return query.fetchall()
 
+
+    @allure.step("БД. Удалить организацию по {id}")
     def delete(self, id):
-        conn = self.__db.connect()
-        conn.execute(self.__scripts ["delete_by_id"], {"id_to_delete": id})
-        conn.commit()
-        conn.close()
-
-    def create(self, name, is_active, create_timestamp, change_timestamp):
-        if create_timestamp is None:
-            create_timestamp = datetime.now()
-            change_timestamp = datetime.now()
-        conn = self.__db.connect()
-        conn.execute(self.__scripts["insert_new"],
-                     {"new_name": name, "is_active": is_active, "create_timestamp": create_timestamp, "change_timestamp": change_timestamp})
-        conn.commit()
-        conn.close()
+        params = {'id_to_delete': id}
+        query = self.__db.execute(self.__scripts["delete by id"], parameters=params)
+        allure.attach(str(query.context.cursor.query), 'SQL', allure.attachment_type.TEXT)
 
 
+    @allure.step("БД. Создать организацию с названием {name}")
+    def create(self, name):
+        params = {'new_name': name}
+        query = self.__db.execute(self.__scripts["insert new"], parameters=params)
+        allure.attach(str(query.context.cursor.query), 'SQL', allure.attachment_type.TEXT)
+
+
+    @allure.step("БД. Получить максимальный id организации")
     def get_max_id(self):
-        conn = self.__db.connect()
-        result = conn.execute(self.__scripts["get_max_id"])
-        max_id = result.scalar()
-        conn.close()
-        return max_id
-
-    def get_company_by_id(self, id):
-        conn = self.__db.connect()
-        result = conn.execute(
-            self.__scripts["select by id"],{"select_id": id}
-        )
-        company = result.mappings().all()
-        conn.close()
-        return company
-
-    def get_company_by_id(self, id):
-        conn = self.__db.connect()
-        result = conn.execute(
-            self.__scripts["select by id"],
-        {"select_id": id}
-        )
-        company = result.mappings().all()
-        conn.close()
-        return company
+        query = self.__db.execute(self.__scripts["get max id"])
+        allure.attach(str(query.context.cursor.query), 'SQL', allure.attachment_type.TEXT)
+        return query.fetchall()[0][0]
